@@ -14,16 +14,16 @@ function Get-WinEventLogs
 		[int]$Minute
 	)
 			
-	function Get-SAXODomainCredential
+	function Credential
 	{
 				param ($DNS)
 				
 				switch ($DNS)
 				{
-					'mid' { Return $midas2 }
-					'sys' { Return $sys }
-					'tst2' { Return $tst2 }
-					'dmz' { Return $DMZ }
+					'One' { Return $One }
+					'Two' { Return $Two }
+					'Three' { Return $Three }
+					'Four' { Return $Four }
 				}
 			}
 			
@@ -54,15 +54,15 @@ function Get-WinEventLogs
 	{
 				Try
 				{
-					$output += Get-WinEvent -ComputerName $computer -Credential $(Get-SAXODomainCredential -Dns (Resolve-DnsName $computer).Name.split('.')[1]) -FilterHashTable @{ ProviderName = 'SaxoAdmService'; StartTime = $using:StartTimestamp } -ErrorAction SilentlyContinue |
+					$output += Get-WinEvent -ComputerName $computer -Credential $(Get-Credential -Dns (Resolve-DnsName $computer).Name.split('.')[1]) -FilterHashTable @{ ProviderName = 'Service'; StartTime = $using:StartTimestamp } -ErrorAction SilentlyContinue |
 					Select-Object Machinename, TimeCreated, Id, LevelDisplayName, Message
 				}
 				Catch
 				{
-					$RemoteSession =  New-PSSession -ComputerName $computer -Credential $(Get-SAXODomainCredential -Dns (Resolve-DnsName $computer).Name.split('.')[1])
+					$RemoteSession =  New-PSSession -ComputerName $computer -Credential $(Get-Credential -Dns (Resolve-DnsName $computer).Name.split('.')[1])
 					
 					$Output        += Invoke-Command -Session $RemoteSession -ScriptBlock {
-						$result = Get-WinEvent -ErrorAction SilentlyContinue -FilterHashTable @{ ProviderName = 'SaxoAdmService'; StartTime = $using:StartTimestamp } |
+						$result = Get-WinEvent -ErrorAction SilentlyContinue -FilterHashTable @{ ProviderName = 'Service'; StartTime = $using:StartTimestamp } |
 						Select-Object Machinename, TimeCreated, Id, LevelDisplayName, Message
 						Return $result
 					}
@@ -72,7 +72,7 @@ function Get-WinEventLogs
 
 	If ($IncludeID)
 	{
-		$OutPut | Where-Object { $_.Id -notin $ExcludeID} | Where-Object { $_.Id -in $IncludeID } | Select-Object -Property TimeCreated,Id,PSComputerName,Message #Format-Table -Property TimeCreated,Id,PSComputerName,Message -Wrap
+		$OutPut | Where-Object { $_.Id -notin $ExcludeID} | Where-Object { $_.Id -in $IncludeID } | Select-Object -Property TimeCreated,Id,PSComputerName,Message
 	}
 	Else
 	{
@@ -81,3 +81,4 @@ function Get-WinEventLogs
 }
 		
 Export-ModuleMember -Function Get-WinEventLogs
+		
